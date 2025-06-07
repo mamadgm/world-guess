@@ -12,6 +12,6 @@ const routes = [
 ]
 
 export default createRouter({
-  history: createWebHistory("/world-guess/"),
+  history: createWebHistory("/iranpin/"),
   routes
 })

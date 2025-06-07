@@ -15,10 +15,20 @@ let trueMarker: L.Marker | null = null;
 let line: L.Polyline | null = null;
 let map: L.Map; // Moved here so it's accessible globally
 
-function calculateDummyScore(user: L.LatLng, truth: L.LatLng): number {
-  const distance = user.distanceTo(truth) / 1000; // in km
-  return Math.max(0, 5000 - Math.round(distance)); // 5000 max
+function calculateScore(user: L.LatLng, truth: L.LatLng): number {
+  const distanceKm = user.distanceTo(truth) / 1000; // in km
+
+  const maxDistance = 500; // km
+  const maxScore = 500;
+  const minScore = 1;
+
+  if (distanceKm >= maxDistance) return minScore;
+
+  const score = maxScore - ((distanceKm / maxDistance) * (maxScore - minScore));
+  return Math.round(score);
 }
+
+
 
 const handleButtonClick = () => {
   if (!submitted.value) {
@@ -41,7 +51,7 @@ const handleButtonClick = () => {
     ).addTo(map);
 
     // Calculate dummy score
-    score.value = calculateDummyScore(
+    score.value = calculateScore(
       L.latLng(userGuess.value.lat, userGuess.value.lng),
       L.latLng(gameStore.realLocation)
     );
@@ -110,7 +120,8 @@ onMounted(() => {
       v-if="submitted && score !== null"
       class="absolute bottom-24 left-1/2 transform -translate-x-1/2 text-white text-2xl bg-black bg-opacity-60 p-4 rounded-lg"
     >
-      Score: {{ score }} points
+      امتیاز: {{ score }} points<br>
+      {{ gameStore.currentGame?.name }}
     </div>
   </div>
 </template>

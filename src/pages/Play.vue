@@ -1,17 +1,15 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { onUnmounted, ref } from "vue";
 import { useGameStore } from "@/stores/maps";
 
-const gameStore = useGameStore()
+const router = useRouter();
+const gameStore = useGameStore();
 
 const panoRef = ref<HTMLDivElement | null>(null);
-const router = useRouter();
-const mode = ref<"image" | "video" | null>(null);
+const videoRef = ref<HTMLVideoElement | null>(null);
 
 const goToGuess = () => router.push("/guess");
-
-const videoRef = ref<HTMLVideoElement | null>(null);
 
 // Declare Marzipano & VideoAsset globally
 declare global {
@@ -21,200 +19,124 @@ declare global {
   }
 }
 
-function loadMarzipano(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (window.Marzipano && window.VideoAsset) {
-      resolve();
-      return;
-    }
+async function loadMarzipano(): Promise<void> {
+  if (window.Marzipano && window.VideoAsset) return;
 
-    const marzipanoScript = document.createElement("script");
-    marzipanoScript.src = "/world-guess/lib/marzipano.js";
-    marzipanoScript.async = true;
+  const loadScript = (src: string): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = src;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load ${src}`));
+      document.head.appendChild(script);
+    });
 
-    const videoAssetScript = document.createElement("script");
-    videoAssetScript.src = "/world-guess/lib/videoasset.js";
-    videoAssetScript.async = true;
-
-    marzipanoScript.onload = () => {
-      videoAssetScript.onload = () => resolve();
-      videoAssetScript.onerror = () =>
-        reject(new Error("Failed to load VideoAsset.js"));
-      document.head.appendChild(videoAssetScript);
-    };
-
-    marzipanoScript.onerror = () =>
-      reject(new Error("Failed to load Marzipano.js"));
-    document.head.appendChild(marzipanoScript);
-  });
+  await loadScript("/world-guess/lib/marzipano.js");
+  await loadScript("/world-guess/lib/videoasset.js");
 }
 
 async function setupViewer() {
   await loadMarzipano();
+
   const Marzipano = window.Marzipano;
+  const VideoAsset = window.VideoAsset;
 
-  if (!panoRef.value) return;
+  const container = panoRef.value;
+  if (!container) return;
 
-  const viewer = new Marzipano.Viewer(panoRef.value);
+  const viewer = new Marzipano.Viewer(container);
 
-  if (mode.value === "image") {
-    
-    
-    gameStore.setLocationByCity("tehran")
-    // ---- Image pano setup (same as your original code)
-    const levels = [
-      { tileSize: 256, size: 256, fallbackOnly: true },
-      { tileSize: 512, size: 512 },
-      { tileSize: 512, size: 1024 },
-      { tileSize: 512, size: 2048 },
-      { tileSize: 512, size: 4096 },
-    ];
+  const video = document.createElement("video");
+  videoRef.value = video;
 
-    const geometry = new Marzipano.CubeGeometry(levels);
-    const source = Marzipano.ImageUrlSource.fromString(
-      "/world-guess/assets/tiles/0-high-1/{z}/{f}/{y}/{x}.jpg",
-      { cubeMapPreviewUrl: "/world-guess/assets/tiles/0-high-1/preview.jpg" }
-    );
+  const url = gameStore.currentGame?.link;
+  if (!url || !url.endsWith(".mp4")) return;
 
-    const initialView = {
-      yaw: (90 * Math.PI) / 180,
-      pitch: (-30 * Math.PI) / 180,
-      fov: (90 * Math.PI) / 180,
-    };
+  video.src = url;
+  video.crossOrigin = "anonymous";
+  video.autoplay = true;
+  video.loop = true;
+  video.playsInline = true;
+  video.muted = false;
+  await video.play();
 
-    const limiter = Marzipano.RectilinearView.limit.traditional(
-      4096,
-      (120 * Math.PI) / 180
-    );
-    const view = new Marzipano.RectilinearView(initialView, limiter);
-
-    const scene = viewer.createScene({
-      source,
-      geometry,
-      view,
-      pinFirstLevel: true,
-    });
-    scene.switchTo();
-  } else if (mode.value === "video") {
-    gameStore.setLocationByCity("mashhad")
-    // ---- Equirectangular video setup
-    const video = document.createElement("video");
-    videoRef.value = video; // Save reference
-
-    video.src = "https://noorvana.ir/vr_video/car.mp4"; // change to your file
-    video.crossOrigin = "anonymous";
-    video.autoplay = true;
-    video.loop = true;
-    video.playsInline = true;
-    video.muted = false; // required for autoplay
-    await video.play();
-
-    const VideoAsset = window.VideoAsset;
-    const asset = new VideoAsset(video);
-    const source = new Marzipano.SingleAssetSource(asset);
-    const geometry = new Marzipano.EquirectGeometry([{ width: 1 }]);
-    const limiter = Marzipano.RectilinearView.limit.vfov(
-      Math.PI / 2,
-      Math.PI / 2
-    );
-    const view = new Marzipano.RectilinearView({ fov: Math.PI / 2 }, limiter);
-    const scene = viewer.createScene({ source, geometry, view });
-    scene.switchTo();
-  }
+  const asset = new VideoAsset(video);
+  const source = new Marzipano.SingleAssetSource(asset);
+  const geometry = new Marzipano.EquirectGeometry([{ width: 1 }]);
+  const limiter = Marzipano.RectilinearView.limit.vfov(
+    Math.PI / 2,
+    Math.PI / 2,
+  );
+  const view = new Marzipano.RectilinearView({ fov: Math.PI / 2 }, limiter);
+  const scene = viewer.createScene({ source, geometry, view });
+  scene.switchTo();
 }
 
-//VIDEO
-function playVideo() {
-  videoRef.value?.play();
-}
-
-function pauseVideo() {
-  videoRef.value?.pause();
-}
-
-function toggleMute() {
-  if (!videoRef.value) return;
-  videoRef.value.muted = !videoRef.value.muted;
-}
-
-function seekTo(seconds: number) {
-  if (!videoRef.value) return;
-  videoRef.value.currentTime = seconds;
-}
-function onSeek(event: Event) {
-  if (!videoRef.value) return;
-  const target = event.target as HTMLInputElement;
-  const seekPercent = Number(target.value) / 100;
-  const duration = videoRef.value.duration || 0;
-  videoRef.value.currentTime = seekPercent * duration;
-}
+onMounted(() => {
+  setupViewer();
+});
 
 onUnmounted(() => {
   if (videoRef.value) {
     videoRef.value.pause();
     videoRef.value.removeAttribute("src");
-    videoRef.value.load(); // Ensures browser stops downloading
+    videoRef.value.load();
   }
 });
 
-//VIDEO
+// Video controls
+function playVideo() {
+  videoRef.value?.play();
+}
+function pauseVideo() {
+  videoRef.value?.pause();
+}
+function toggleMute() {
+  if (videoRef.value) {
+    videoRef.value.muted = !videoRef.value.muted;
+  }
+}
+function onSeek(event: Event) {
+  if (!videoRef.value) return;
+  const input = event.target as HTMLInputElement;
+  const percent = Number(input.value) / 100;
+  const duration = videoRef.value.duration || 0;
+  videoRef.value.currentTime = percent * duration;
+}
 </script>
 
 <template>
-  <div
-    class="h-screen w-screen bg-black flex items-center justify-center"
-    v-if="!mode"
-  >
-    <button
-      @click="
-        mode = 'image';
-        setupViewer();
-      "
-      class="px-6 py-3 m-4 bg-blue-600 text-white rounded-lg"
-    >
-      Load Image Panorama
-    </button>
-    <button
-      @click="
-        mode = 'video';
-        setupViewer();
-      "
-      class="px-6 py-3 m-4 bg-red-600 text-white rounded-lg"
-    >
-      Load Video Panorama
-    </button>
-  </div>
+  <div class="relative h-screen w-screen bg-black">
+    <div ref="panoRef" class="h-full w-full"></div>
 
-  <div v-else class="h-screen w-screen bg-black relative">
-    <div ref="panoRef" class="w-full h-full"></div>
-
+    <!-- Navigation Button -->
     <button
       @click="goToGuess"
-      class="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-green-600 px-6 py-3 rounded-xl text-white hover:bg-green-700"
+      class="absolute bottom-10 left-1/2 -translate-x-1/2 transform rounded-xl bg-green-600 px-6 py-3 text-white hover:bg-green-700"
     >
-      Let's Guess
+      Make Your Guess
     </button>
 
-    <!-- Video controls shown only when mode is video -->
+    <!-- Video Controls -->
     <div
-      v-if="mode === 'video'"
-      class="absolute top-10 left-10 space-x-4 bg-black bg-opacity-50 p-2 rounded-lg"
+      class="absolute left-10 top-10 flex gap-4 rounded-lg bg-black bg-opacity-50 p-3"
     >
       <button
         @click="playVideo"
-        class="p-5 py-1 bg-gray-700 text-white rounded"
+        class="rounded bg-gray-700 px-3 py-1 text-white"
       >
         Play
       </button>
       <button
         @click="pauseVideo"
-        class="p-5 py-1 bg-gray-700 text-white rounded"
+        class="rounded bg-gray-700 px-3 py-1 text-white"
       >
         Pause
       </button>
       <button
         @click="toggleMute"
-        class="p-5 py-1 bg-gray-700 text-white rounded"
+        class="rounded bg-gray-700 px-3 py-1 text-white"
       >
         {{ videoRef?.muted ? "Unmute" : "Mute" }}
       </button>

@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Azadi Stadium, Tehran",
+    "lat": 35.7219,
+    "lng": 51.3030,
+    "link": "https://mammutepd.ir/iranpin/vr_videos/Azadi-tehran.mp4"
+  },
+  {
+    "name": "Chalous, Mazandaran",
+    "lat": 36.6550,
+    "lng": 51.4206,
+    "link": "https://mammutepd.ir/iranpin/vr_videos/challos.mp4"
+  },
+  {
+    "name": "Isfahan",
+    "lat": 32.6546,
+    "lng": 51.6680,
+    "link": "https://mammutepd.ir/iranpin/vr_videos/esfehan.mp4"
+  },
+  {
+    "name": "Kish Island",
+    "lat": 26.5320,
+    "lng": 53.9800,
+    "link": "https://mammutepd.ir/iranpin/vr_videos/kish.mp4"
+  },
+  {
+    "name": "Motel Ghoo (Salman Shahr), Mazandaran",
+    "lat": 36.7033,
+    "lng": 51.1940,
+    "link": "https://mammutepd.ir/iranpin/vr_videos/mazandaran-motel-qhoo.mp4"
+  },
+  {
+    "name": "Persepolis (Takht-e Jamshid)",
+    "lat": 29.9358,
+    "lng": 52.8916,
+    "link": "https://mammutepd.ir/iranpin/vr_videos/persepolis.mp4"
+  },
+  {
+    "name": "Grand Bazaar, Tabriz",
+    "lat": 38.0725,
+    "lng": 46.2966,
+    "link": "https://mammutepd.ir/iranpin/vr_videos/tabriz-bazar.mp4"
+  },
+  {
+    "name": "Tajrish Square, Tehran",
+    "lat": 35.8206,
+    "lng": 51.4256,
+    "link": "https://mammutepd.ir/iranpin/vr_videos/tehran-tajrish.mp4"
+  }
+]

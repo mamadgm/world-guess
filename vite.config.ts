@@ -15,5 +15,5 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: "/world-guess/",
+  base: "/iranpin/",
 });

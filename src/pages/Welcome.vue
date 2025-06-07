@@ -1,13 +1,22 @@
+<script setup>
+import { useRouter } from "vue-router";
+import { useGameStore } from "@/stores/maps";
+const router = useRouter();
+const gameStore = useGameStore();
+
+const goToPlay = () => {
+  router.push("/play");
+  gameStore.pickRandomVideo();
+};
+</script>
+
 <template>
-  <div class="flex items-center justify-center h-screen bg-gray-900 text-white">
-    <button @click="goToPlay" class="px-6 py-3 bg-blue-600 rounded-xl hover:bg-blue-700 text-xl">
-      Start Game
-    </button>
+  <div class="flex h-screen items-center justify-center bg-gray-900">
+    <button
+      @click="goToPlay"
+      class="rounded-xl bg-blue-600 px-6 py-3 text-xl text-white hover:bg-blue-700"
+    >
+      Start Game</button
+    >s
   </div>
 </template>
-
-<script setup>
-import { useRouter } from 'vue-router'
-const router = useRouter()
-const goToPlay = () => router.push('/play')
-</script>
